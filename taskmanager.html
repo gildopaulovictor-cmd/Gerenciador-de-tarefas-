@@ -1,0 +1,1059 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#667eea">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="TaskManager Pro">
+    <link rel="manifest" href="data:application/json,{&quot;name&quot;:&quot;TaskManager Pro&quot;,&quot;short_name&quot;:&quot;Tasks&quot;,&quot;start_url&quot;:&quot;/&quot;,&quot;display&quot;:&quot;standalone&quot;,&quot;background_color&quot;:&quot;#667eea&quot;,&quot;theme_color&quot;:&quot;#667eea&quot;}">
+    <title>TaskManager Pro - HTML5 App</title>
+    <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --secondary-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            --success-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            --danger-gradient: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+            --dark-gradient: linear-gradient(135deg, #434343 0%, #000000 100%);
+            --glass-bg: rgba(255, 255, 255, 0.25);
+            --glass-border: rgba(255, 255, 255, 0.18);
+            --shadow-primary: 0 8px 32px rgba(102, 126, 234, 0.37);
+            --shadow-glass: 0 8px 32px rgba(31, 38, 135, 0.37);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--primary-gradient);
+            background-attachment: fixed;
+            min-height: 100vh;
+            overflow-x: hidden;
+            transition: all 0.3s ease;
+        }
+
+        body.dark-mode {
+            background: var(--dark-gradient);
+        }
+
+        /* Partículas animadas de fundo */
+        .particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .particle {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            animation: float 6s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); opacity: 0.5; }
+            50% { transform: translateY(-20px) rotate(180deg); opacity: 1; }
+        }
+
+        /* Container principal adaptativo */
+        .app-container {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+            max-width: min(450px, 95vw);
+            margin: 0 auto;
+            padding: 10px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Detecção automática de dispositivo */
+        .device-info {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 8px 12px;
+            font-size: 10px;
+            color: white;
+            z-index: 1000;
+            opacity: 0.8;
+            transition: all 0.3s ease;
+        }
+
+        .device-info:hover {
+            opacity: 1;
+            transform: scale(1.05);
+        }
+
+        /* Header com glassmorphism */
+        .app-header {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 25px;
+            color: white;
+            padding: 25px 20px;
+            text-align: center;
+            margin-bottom: 20px;
+            box-shadow: var(--shadow-glass);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .app-header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(255,255,255,0.1), transparent);
+            transform: rotate(45deg);
+            animation: shimmer 3s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+            100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
+        }
+
+        .app-title {
+            font-size: clamp(20px, 5vw, 28px);
+            font-weight: 800;
+            margin-bottom: 8px;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.3);
+            position: relative;
+            z-index: 2;
+        }
+
+        .app-subtitle {
+            font-size: clamp(12px, 3vw, 14px);
+            opacity: 0.9;
+            position: relative;
+            z-index: 2;
+        }
+
+        /* Status bar melhorado */
+        .status-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+            background: rgba(255,255,255,0.15);
+            border-radius: 15px;
+            margin-top: 15px;
+            font-size: clamp(10px, 2.5vw, 12px);
+            position: relative;
+            z-index: 2;
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            transition: transform 0.3s ease;
+        }
+
+        .status-item:hover {
+            transform: scale(1.1);
+        }
+
+        /* Controles superiores */
+        .top-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            gap: 10px;
+        }
+
+        .theme-toggle, .settings-btn {
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--glass-border);
+            border-radius: 15px;
+            padding: 12px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: var(--shadow-glass);
+        }
+
+        .theme-toggle:hover, .settings-btn:hover {
+            transform: translateY(-2px) scale(1.05);
+            box-shadow: var(--shadow-primary);
+        }
+
+        /* Seção de input melhorada */
+        .input-section {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: var(--shadow-glass);
+        }
+
+        .task-input {
+            width: 100%;
+            padding: 16px 20px;
+            border: 2px solid transparent;
+            border-radius: 15px;
+            font-size: clamp(14px, 4vw, 16px);
+            background: rgba(255,255,255,0.9);
+            outline: none;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .task-input:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 20px rgba(102, 126, 234, 0.3);
+            transform: scale(1.02);
+        }
+
+        .input-controls {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .add-btn {
+            flex: 1;
+            padding: 16px;
+            background: var(--primary-gradient);
+            color: white;
+            border: none;
+            border-radius: 15px;
+            font-size: clamp(14px, 4vw, 16px);
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: var(--shadow-primary);
+        }
+
+        .add-btn:hover {
+            transform: translateY(-3px) scale(1.02);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .voice-btn {
+            padding: 16px 20px;
+            background: var(--success-gradient);
+            color: white;
+            border: none;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 32px rgba(79, 172, 254, 0.37);
+        }
+
+        .voice-btn:hover {
+            transform: translateY(-3px) scale(1.05);
+        }
+
+        /* Stats com animação */
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-item {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 20px 15px;
+            text-align: center;
+            color: white;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            box-shadow: var(--shadow-glass);
+        }
+
+        .stat-item:hover {
+            transform: translateY(-5px) scale(1.05);
+            box-shadow: var(--shadow-primary);
+        }
+
+        .stat-number {
+            font-size: clamp(20px, 6vw, 28px);
+            font-weight: bold;
+            margin-bottom: 5px;
+            background: linear-gradient(45deg, #fff, #f0f0f0);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .stat-label {
+            font-size: clamp(10px, 3vw, 12px);
+            opacity: 0.8;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Lista de tarefas aprimorada */
+        .tasks-section {
+            flex: 1;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .section-title {
+            font-size: clamp(16px, 4vw, 20px);
+            font-weight: bold;
+            color: white;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.3);
+        }
+
+        .filter-buttons {
+            display: flex;
+            gap: 8px;
+        }
+
+        .filter-btn {
+            padding: 8px 12px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--glass-border);
+            border-radius: 10px;
+            color: white;
+            cursor: pointer;
+            font-size: clamp(10px, 2.5vw, 12px);
+            transition: all 0.3s ease;
+        }
+
+        .filter-btn.active, .filter-btn:hover {
+            background: rgba(255,255,255,0.3);
+            transform: scale(1.05);
+        }
+
+        .task-item {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            padding: 18px;
+            margin-bottom: 12px;
+            border-radius: 18px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            transition: all 0.4s ease;
+            cursor: pointer;
+            box-shadow: var(--shadow-glass);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .task-item::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 4px;
+            height: 100%;
+            background: var(--primary-gradient);
+            transition: width 0.3s ease;
+        }
+
+        .task-item:hover {
+            transform: translateX(8px) scale(1.02);
+            box-shadow: var(--shadow-primary);
+        }
+
+        .task-item:hover::before {
+            width: 100%;
+            opacity: 0.1;
+        }
+
+        .task-item.completed {
+            opacity: 0.7;
+        }
+
+        .task-item.completed .task-text {
+            text-decoration: line-through;
+        }
+
+        .task-checkbox {
+            width: 24px;
+            height: 24px;
+            border: 2px solid rgba(255,255,255,0.5);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            flex-shrink: 0;
+        }
+
+        .task-checkbox.completed {
+            background: var(--success-gradient);
+            border-color: transparent;
+            transform: scale(1.1);
+        }
+
+        .task-text {
+            flex: 1;
+            color: white;
+            font-size: clamp(13px, 3.5vw, 15px);
+            line-height: 1.4;
+            word-break: break-word;
+        }
+
+        .task-actions {
+            display: flex;
+            gap: 8px;
+            opacity: 0.7;
+            transition: opacity 0.3s ease;
+        }
+
+        .task-item:hover .task-actions {
+            opacity: 1;
+        }
+
+        .btn-small {
+            padding: 8px 10px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: clamp(10px, 2.5vw, 12px);
+            font-weight: bold;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .btn-edit {
+            background: var(--success-gradient);
+            color: white;
+        }
+
+        .btn-delete {
+            background: var(--danger-gradient);
+            color: white;
+        }
+
+        .btn-small:hover {
+            transform: scale(1.1) rotateZ(5deg);
+        }
+
+        /* Estado vazio melhorado */
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: rgba(255,255,255,0.8);
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            box-shadow: var(--shadow-glass);
+        }
+
+        .empty-icon {
+            font-size: clamp(40px, 12vw, 60px);
+            margin-bottom: 15px;
+            opacity: 0.6;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 0.6; }
+            50% { transform: scale(1.1); opacity: 0.8; }
+        }
+
+        /* Modal de configurações */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 25px;
+            padding: 30px;
+            max-width: 400px;
+            width: 100%;
+            color: white;
+            box-shadow: var(--shadow-glass);
+            transform: scale(0.8);
+            transition: transform 0.3s ease;
+        }
+
+        .modal.show .modal-content {
+            transform: scale(1);
+        }
+
+        .modal-header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-title {
+            font-size: clamp(18px, 5vw, 22px);
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            background: none;
+            border: none;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+
+        .close-btn:hover {
+            transform: scale(1.2) rotate(90deg);
+        }
+
+        /* Responsividade avançada */
+        @media (max-width: 480px) {
+            .app-container {
+                padding: 5px;
+            }
+            
+            .input-controls {
+                flex-direction: column;
+            }
+            
+            .voice-btn {
+                order: -1;
+            }
+        }
+
+        @media (min-width: 768px) {
+            .app-container {
+                max-width: 500px;
+                padding: 20px;
+            }
+        }
+
+        @media (min-width: 1024px) {
+            .app-container {
+                max-width: 600px;
+            }
+        }
+
+        /* Animações de entrada */
+        @keyframes slideInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .animate-in {
+            animation: slideInUp 0.6s ease-out forwards;
+        }
+
+        /* Modo escuro */
+        .dark-mode .task-input {
+            background: rgba(50, 50, 50, 0.9);
+            color: white;
+        }
+
+        .dark-mode .task-input::placeholder {
+            color: rgba(255, 255, 255, 0.6);
+        }
+    </style>
+</head>
+<body>
+    <div class="particles" id="particles"></div>
+    
+    <div class="device-info" id="deviceInfo">
+        📱 Carregando info do dispositivo...
+    </div>
+
+    <div class="app-container">
+        <div class="app-header animate-in">
+            <div class="top-controls">
+                <button class="theme-toggle" onclick="toggleTheme()" title="Alternar tema">
+                    🌙
+                </button>
+                <button class="settings-btn" onclick="showSettings()" title="Configurações">
+                    ⚙️
+                </button>
+            </div>
+            
+            <h1 class="app-title">🚀 TaskManager Pro</h1>
+            <p class="app-subtitle">Seu assistente pessoal inteligente</p>
+            
+            <div class="status-bar">
+                <div class="status-item">
+                    <span>📍</span>
+                    <span id="location">Beira, Sofala</span>
+                </div>
+                <div class="status-item">
+                    <span>🔋</span>
+                    <span id="battery">85%</span>
+                </div>
+                <div class="status-item">
+                    <span>🕐</span>
+                    <span id="time"></span>
+                </div>
+                <div class="status-item">
+                    <span>📶</span>
+                    <span id="connection">4G</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="input-section animate-in">
+            <input type="text" class="task-input" id="taskInput" 
+                   placeholder="Digite sua nova tarefa..." 
+                   autocomplete="off">
+            <div class="input-controls">
+                <button class="add-btn" onclick="addTask()">
+                    ➕ Adicionar Tarefa
+                </button>
+                <button class="voice-btn" onclick="startVoiceInput()" title="Comando de voz">
+                    🎤
+                </button>
+            </div>
+        </div>
+
+        <div class="stats animate-in">
+            <div class="stat-item" onclick="filterTasks('all')">
+                <div class="stat-number" id="totalTasks">0</div>
+                <div class="stat-label">Total</div>
+            </div>
+            <div class="stat-item" onclick="filterTasks('completed')">
+                <div class="stat-number" id="completedTasks">0</div>
+                <div class="stat-label">Feitas</div>
+            </div>
+            <div class="stat-item" onclick="filterTasks('pending')">
+                <div class="stat-number" id="pendingTasks">0</div>
+                <div class="stat-label">Pendentes</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number" id="productivity">0%</div>
+                <div class="stat-label">Produtividade</div>
+            </div>
+        </div>
+
+        <div class="tasks-section animate-in">
+            <div class="section-header">
+                <h2 class="section-title">📋 Suas Tarefas</h2>
+                <div class="filter-buttons">
+                    <button class="filter-btn active" data-filter="all" onclick="setFilter(this, 'all')">Todas</button>
+                    <button class="filter-btn" data-filter="pending" onclick="setFilter(this, 'pending')">Pendentes</button>
+                    <button class="filter-btn" data-filter="completed" onclick="setFilter(this, 'completed')">Feitas</button>
+                </div>
+            </div>
+            <div id="tasksList">
+                <div class="empty-state">
+                    <div class="empty-icon">🎯</div>
+                    <h3>Nenhuma tarefa ainda!</h3>
+                    <p>Comece adicionando sua primeira tarefa<br>e organize seu dia com estilo!</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Configurações -->
+    <div class="modal" id="settingsModal">
+        <div class="modal-content">
+            <button class="close-btn" onclick="closeSettings()">&times;</button>
+            <div class="modal-header">
+                <h2 class="modal-title">⚙️ Configurações</h2>
+                <p>Personalize seu TaskManager</p>
+            </div>
+            <div class="modal-body">
+                <h3>📊 Estatísticas da Sessão:</h3>
+                <p>🚀 Tarefas criadas: <span id="sessionStats">0</span></p>
+                <p>⏱️ Tempo ativo: <span id="sessionTime">0min</span></p>
+                <p>📱 Dispositivo: <span id="deviceType">Unknown</span></p>
+                <p>🌐 Navegador: <span id="browserInfo">Unknown</span></p>
+                <p>📏 Resolução: <span id="screenRes">Unknown</span></p>
+                <br>
+                <h3>🎨 Recursos HTML5 Detectados:</h3>
+                <div id="html5Features"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Variáveis globais
+        let tasks = [];
+        let taskIdCounter = 1;
+        let currentFilter = 'all';
+        let sessionStartTime = Date.now();
+        let sessionTaskCount = 0;
+        let isDarkMode = false;
+
+        // Detecção de dispositivo e tela
+        function detectDevice() {
+            const width = window.innerWidth;
+            const height = window.innerHeight;
+            const ratio = window.devicePixelRatio || 1;
+            const userAgent = navigator.userAgent;
+            
+            let deviceType = 'Desktop';
+            let deviceIcon = '💻';
+            
+            if (/Mobile|Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(userAgent)) {
+                if (width < 768) {
+                    deviceType = 'Mobile';
+                    deviceIcon = '📱';
+                } else {
+                    deviceType = 'Tablet';
+                    deviceIcon = '📊';
+                }
+            }
+            
+            const info = `${deviceIcon} ${deviceType} | ${width}x${height} | ${ratio}x`;
+            document.getElementById('deviceInfo').textContent = info;
+            
+            // Ajustar layout baseado no dispositivo
+            adjustLayoutForDevice(deviceType, width);
+            
+            return { deviceType, width, height, ratio };
+        }
+
+        // Ajustar layout baseado no dispositivo
+        function adjustLayoutForDevice(deviceType, width) {
+            const container = document.querySelector('.app-container');
+            const root = document.documentElement;
+            
+            if (deviceType === 'Mobile') {
+                if (width < 360) {
+                    root.style.setProperty('--mobile-scale', '0.9');
+                    container.style.transform = 'scale(0.95)';
+                }
+            }
+        }
+
+        // Criar partículas animadas
+        function createParticles() {
+            const particlesContainer = document.getElementById('particles');
+            const particleCount = window.innerWidth < 768 ? 15 : 25;
+            
+            for (let i = 0; i < particleCount; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.top = Math.random() * 100 + '%';
+                particle.style.width = (Math.random() * 10 + 5) + 'px';
+                particle.style.height = particle.style.width;
+                particle.style.animationDelay = Math.random() * 6 + 's';
+                particle.style.animationDuration = (Math.random() * 4 + 4) + 's';
+                particlesContainer.appendChild(particle);
+            }
+        }
+
+        // Atualizar informações em tempo real
+        function updateRealTimeInfo() {
+            // Horário
+            const now = new Date();
+            document.getElementById('time').textContent = now.toLocaleTimeString('pt-BR', { 
+                hour: '2-digit', 
+                minute: '2-digit' 
+            });
+            
+            // Simular bateria
+            const battery = Math.floor(Math.random() * 20) + 70;
+            document.getElementById('battery').textContent = battery + '%';
+            
+            // Simular conexão
+            const connections = ['4G', '5G', 'WiFi', '3G'];
+            const connection = connections[Math.floor(Math.random() * connections.length)];
+            document.getElementById('connection').textContent = connection;
+        }
+
+        // Adicionar tarefa com animação
+        function addTask() {
+            const input = document.getElementById('taskInput');
+            const taskText = input.value.trim();
+            
+            if (taskText === '') {
+                showNotification('⚠️ Por favor, digite uma tarefa!', 'warning');
+                return;
+            }
+
+            const newTask = {
+                id: taskIdCounter++,
+                text: taskText,
+                completed: false,
+                createdAt: new Date(),
+                priority: 'normal'
+            };
+
+            tasks.unshift(newTask);
+            input.value = '';
+            sessionTaskCount++;
+            
+            renderTasks();
+            updateStats();
+            showNotification('✅ Tarefa adicionada com sucesso!', 'success');
+            
+            // Vibração se suportada
+            if ('vibrate' in navigator) {
+                navigator.vibrate(50);
+            }
+        }
+
+        // Renderizar tarefas com filtro
+        function renderTasks() {
+            const tasksList = document.getElementById('tasksList');
+            let filteredTasks = tasks;
+            
+            if (currentFilter === 'completed') {
+                filteredTasks = tasks.filter(task => task.completed);
+            } else if (currentFilter === 'pending') {
+                filteredTasks = tasks.filter(task => !task.completed);
+            }
+            
+            if (filteredTasks.length === 0) {
+                const emptyMessages = {
+                    all: { icon: '🎯', title: 'Nenhuma tarefa ainda!', text: 'Comece adicionando sua primeira tarefa<br>e organize seu dia com estilo!' },
+                    completed: { icon: '🏆', title: 'Nenhuma tarefa concluída!', text: 'Complete algumas tarefas para<br>ver seu progresso aqui!' },
+                    pending: { icon: '⚡', title: 'Todas as tarefas concluídas!', text: 'Parabéns! Você terminou tudo.<br>Que tal adicionar mais tarefas?' }
+                };
+                
+                const msg = emptyMessages[currentFilter] || emptyMessages.all;
+                
+                tasksList.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">${msg.icon}</div>
+                        <h3>${msg.title}</h3>
+                        <p>${msg.text}</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            tasksList.innerHTML = filteredTasks.map(task => `
+                <div class="task-item ${task.completed ? 'completed' : ''}" data-id="${task.id}">
+                    <div class="task-checkbox ${task.completed ? 'completed' : ''}" onclick="toggleTask(${task.id})">
+                        ${task.completed ? '✓' : ''}
+                    </div>
+                    <div class="task-text">${task.text}</div>
+                    <div class="task-actions">
+                        <button class="btn-small btn-edit" onclick="editTask(${task.id})">✏️</button>
+                        <button class="btn-small btn-delete" onclick="deleteTask(${task.id})">🗑️</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Toggle task completion
+        function toggleTask(id) {
+            tasks = tasks.map(task => 
+                task.id === id ? { ...task, completed: !task.completed } : task
+            );
+            renderTasks();
+            updateStats();
+            showNotification(`Tarefa ${tasks.find(t => t.id === id).completed ? 'marcada como concluída' : 'reaberta'}!`, 'success');
+        }
+
+        // Edit task
+        function editTask(id) {
+            const task = tasks.find(t => t.id === id);
+            const newText = prompt('Editar tarefa:', task.text);
+            if (newText && newText.trim()) {
+                tasks = tasks.map(t => t.id === id ? { ...t, text: newText.trim() } : t);
+                renderTasks();
+                updateStats();
+                showNotification('Tarefa editada com sucesso!', 'success');
+            }
+        }
+
+        // Delete task
+        function deleteTask(id) {
+            if (confirm('Deseja excluir esta tarefa?')) {
+                tasks = tasks.filter(t => t.id !== id);
+                renderTasks();
+                updateStats();
+                showNotification('Tarefa excluída!', 'success');
+            }
+        }
+
+        // Update statistics
+        function updateStats() {
+            const total = tasks.length;
+            const completed = tasks.filter(t => t.completed).length;
+            const pending = total - completed;
+            const productivity = total > 0 ? Math.round((completed / total) * 100) : 0;
+            
+            document.getElementById('totalTasks').textContent = total;
+            document.getElementById('completedTasks').textContent = completed;
+            document.getElementById('pendingTasks').textContent = pending;
+            document.getElementById('productivity').textContent = productivity + '%';
+            document.getElementById('sessionStats').textContent = sessionTaskCount;
+            
+            const elapsed = Math.floor((Date.now() - sessionStartTime) / 60000);
+            document.getElementById('sessionTime').textContent = `${elapsed}min`;
+        }
+
+        // Show notifications
+        function showNotification(message, type) {
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.textContent = message;
+            notification.style.cssText = `
+                position: fixed;
+                bottom: 20px;
+                left: 50%;
+                transform: translateX(-50%);
+                padding: 10px 20px;
+                border-radius: 10px;
+                color: white;
+                background: ${type === 'success' ? 'var(--success-gradient)' : 'var(--danger-gradient)'};
+                z-index: 2000;
+                opacity: 0;
+                transition: opacity 0.3s ease;
+            `;
+            document.body.appendChild(notification);
+            setTimeout(() => {
+                notification.style.opacity = '1';
+                setTimeout(() => {
+                    notification.style.opacity = '0';
+                    setTimeout(() => notification.remove(), 300);
+                }, 2000);
+            }, 100);
+        }
+
+        // Set filter
+        function setFilter(button, filter) {
+            document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+            button.classList.add('active');
+            currentFilter = filter;
+            renderTasks();
+        }
+
+        // Filter tasks
+        function filterTasks(filter) {
+            currentFilter = filter;
+            renderTasks();
+        }
+
+        // Toggle theme
+        function toggleTheme() {
+            isDarkMode = !isDarkMode;
+            document.body.classList.toggle('dark-mode', isDarkMode);
+            localStorage.setItem('theme', isDarkMode ? 'dark' : 'light');
+        }
+
+        // Show settings modal
+        function showSettings() {
+            document.getElementById('settingsModal').classList.add('show');
+            updateSettingsInfo();
+        }
+
+        // Close settings modal
+        function closeSettings() {
+            document.getElementById('settingsModal').classList.remove('show');
+        }
+
+        // Update settings info
+        function updateSettingsInfo() {
+            const { deviceType, width, height, ratio } = detectDevice();
+            const browser = navigator.userAgent.match(/(firefox|chrome|safari|opera|edge)/i)?.[0] || 'Unknown';
+            document.getElementById('deviceType').textContent = deviceType;
+            document.getElementById('browserInfo').textContent = browser;
+            document.getElementById('screenRes').textContent = `${width}x${height} (${ratio}x)`;
+            
+            // HTML5 features detection
+            const features = {
+                'Geolocation': !!navigator.geolocation,
+                'Notifications': !!window.Notification,
+                'Vibration': !!navigator.vibrate,
+                'Web Storage': !!window.localStorage,
+                'Service Worker': !!navigator.serviceWorker
+            };
+            document.getElementById('html5Features').innerHTML = Object.entries(features)
+                .map(([name, supported]) => `<p>${name}: ${supported ? '✅ Suportado' : '❌ Não suportado'}</p>`)
+                .join('');
+        }
+
+        // Voice input
+        function startVoiceInput() {
+            if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
+                const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+                recognition.lang = 'pt-BR';
+                recognition.onresult = (event) => {
+                    const transcript = event.results[0][0].transcript;
+                    document.getElementById('taskInput').value = transcript;
+                    addTask();
+                };
+                recognition.onerror = () => showNotification('Erro na captura de voz!', 'warning');
+                recognition.start();
+                showNotification('🎤 Gravando voz...', 'success');
+            } else {
+                showNotification('Navegador não suporta reconhecimento de voz!', 'warning');
+            }
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            createParticles();
+            detectDevice();
+            updateRealTimeInfo();
+            updateSettingsInfo();
+            
+            // Load saved theme
+            isDarkMode = localStorage.getItem('theme') === 'dark';
+            document.body.classList.toggle('dark-mode', isDarkMode);
+            
+            // Update time every second
+            setInterval(updateRealTimeInfo, 1000);
+            
+            // Handle window resize
+            window.addEventListener('resize', detectDevice);
+            
+            // Load saved tasks
+            tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+            taskIdCounter = tasks.length > 0 ? Math.max(...tasks.map(t => t.id)) + 1 : 1;
+            renderTasks();
+            updateStats();
+        });
+    </script>
+</body>
+</html>
